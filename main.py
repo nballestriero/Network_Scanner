@@ -1,10 +1,11 @@
 # File Invalidate Caches se non funzionano i suggerimenti sulle classi importate
-import scapy.all as scapy
-
-
 # scapy.ls(arp_request_broadcast)
 # arp_request_broadcast.show()
 # scapy.ls(broadcast)
+# print(answered_list.summary())
+import scapy.all as scapy
+import argparse
+
 
 def scan_ip(ip):
     arp_request = scapy.ARP()
@@ -12,12 +13,31 @@ def scan_ip(ip):
     broadcast = scapy.Ether()
     broadcast.dst = "ff:ff:ff:ff:ff:ff"
     arp_request_broadcast = broadcast / arp_request
-    answered_list, unanswered_list = scapy.srp(arp_request_broadcast, timeout=1)
-    print(answered_list.summary())
+    answered_list, unanswered_list = scapy.srp(arp_request_broadcast, timeout=1, verbose=False)
+
+    clients_list = []
     for element in answered_list:
-        print(element[1].psrc)
-        print(element[1].hwsrc)
-        print("-------------------------------------")
+        client_dict = {"ip": element[1].psrc, "mac": element[1].hwsrc}
+        clients_list.append(client_dict)
+    return clients_list
 
 
-scan_ip("10.0.3.0/24")
+def print_result(result_list):
+    print("IP\t\t\tMAC_ADDRESS")
+    print("- - - - - - - - - - - - - - - - - - - - - -")
+    for client in result_list:
+        print(client["ip"], end='\t\t')
+        print(client["mac"])
+        print("-------------------------------------------")
+
+
+def get_arguments():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-t", "--target", dest="target", help="Target IP / IP Range")
+    options = parser.parse_args()
+    return options
+
+
+options = get_arguments()
+result_list = scan_ip(options.target)
+print_result(result_list)
